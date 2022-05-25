@@ -1,0 +1,115 @@
+// TODO: Complete language definition
+
+{
+  parserClass="org.goose.intellijgoose.language.parser.GooseParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Goose"
+  psiImplClassSuffix="Impl"
+  psiPackage="org.goose.intellijgoose.language.psi"
+  psiImplPackage="org.goose.intellijgoose.language.psi.impl"
+
+  elementTypeHolderClass="org.goose.intellijgoose.language.psi.GooseTypes"
+  elementTypeClass="org.goose.intellijgoose.language.psi.GooseElementType"
+  tokenTypeClass="org.goose.intellijgoose.language.psi.GooseTokenType"
+
+  tokens=[
+    DEF="def"
+    UNIQUE="regexp:unique|u"
+    CARRYOVER="carryover"
+    SYNC="sync"
+    ONCE="once"
+    FN="fn"
+
+    EQEQ="=="
+    BANGEQ="!="
+    PLUSEQ="+="
+    DASHEQ="-="
+    STAREQ="*="
+    SLASHEQ="/="
+    LTEQ="<="
+    GTEQ=">="
+
+    BANG="!"
+    AT="@"
+    HASH="#"
+    DOLLAR="$"
+    PERCENT="%"
+    CARET="^"
+    AND="&"
+    STAR="*"
+    OPEN_PAREN="("
+    CLOSE_PAREN=")"
+    DASH="-"
+    EQ="="
+    PLUS="+"
+    OPEN_BRACKET="["
+    CLOSE_BRACKET="]"
+    OPEN_CURLY="{"
+    CLOSE_CURLY="}"
+    BACKSLASH="\\"
+    PIPE="|"
+    SEMICOLON=";"
+    COLON=":"
+    COMMA=","
+    LT="<"
+    DOT="."
+    GT=">"
+    SLASH="/"
+    QUESTION="?"
+
+    IDENT="regexp:[a-zA-Z_]\w*"
+    MULTILINE_COMMENT="regexp:\$\$\$([^$]|\$[^$]|\$[^$][^$])*\$\$\$"
+    COMMENT="regexp:\$.*"
+    WHITESPACE="regexp:[ \t\n\r]+"
+
+    FLOAT="regexp:-?\d+\.\d*"
+    INT="regexp:-?\d+"
+    BIT="regexp:0b|1b"
+    CHAR="regexp:'.'"
+    CHARARRAY="regexp:\"([^\"]|\\\")*\""
+  ]
+
+  name(".*expr")='expression'
+  extends(".*expr")=expr
+}
+
+gooseFile ::= stmt*
+
+stmt ::= func | expr ';' | assign | once_stmt | sync_stmt
+
+once_stmt ::= ONCE "{" stmt* "}"
+
+sync_stmt ::= SYNC "{" stmt* "}"
+
+assign ::= (UNIQUE|CARRYOVER)? IDENT assign_op expr ";"
+
+assign_op ::= "=" | "+=" | "-=" | "*=" | "/="
+
+func ::= DEF IDENT ":" type "(" (fn_arg (',' fn_arg)* ','?)? ")" "->" "|" expr "|" "[" stmt* "]"
+
+fn_arg ::= param_name ":" type
+param_name ::= IDENT
+
+type ::= IDENT | "[" type "]" | FN ":" type "(" (type (',' type)* ','?)? ")"
+
+expr ::= pre_cmp cmp_expr*
+
+left cmp_expr ::= cmp_op pre_cmp
+private cmp_op ::= "==" | "!=" | "<" | ">" | "<=" | ">="
+private pre_cmp ::= pre_add plus_expr*
+
+left plus_expr ::= plus_op pre_add
+private plus_op ::= '+'|'-'
+private pre_add ::= pre_mul mul_expr*
+
+left mul_expr ::= mul_op pre_mul
+private mul_op ::= '*'|'/'
+private pre_mul ::= atom_expr
+
+atom_expr ::= lit_expr | call_expr | IDENT
+call_expr ::= IDENT "(" (expr (',' expr)* ','?)? ")"
+lit_expr ::= literal
+
+literal ::= INT | FLOAT | BIT | CHAR | CHARARRAY
